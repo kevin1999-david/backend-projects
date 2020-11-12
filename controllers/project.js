@@ -3,36 +3,36 @@
 var Project = require('../models/project');
 var fs = require('fs');
 var path = require('path');
+const { param } = require('../routes/project');
+const e = require('express');
 
 
 var controller = {
 
-    home: function (req, res) {
+    home: function(req, res) {
         return res.status(200).send({
             message: 'Soy la Home'
         });
     },
 
-    test: function (req, res) {
+    test: function(req, res) {
 
         return res.status(200).send({
             message: 'Soy el metodo o accion test del controlador de project'
         });
     },
 
-    saveProject: function (req, res) {
+    saveProject: function(req, res) {
         var project = new Project();
         var params = req.body;
         // console.log(req);
-        // console.log(req.body);
+
         project.name = params.name;
         project.description = params.description;
         project.category = params.category;
         project.year = params.year;
         project.languages = params.languages;
         project.image = null;
-
-
 
         project.save((err, projectStored) => {
             if (err) {
@@ -45,7 +45,7 @@ var controller = {
         });
     },
 
-    getProject: function (req, res) {
+    getProject: function(req, res) {
 
         var projectId = req.params.id; //recoje la url
         // console.log("Id: " + req.params.id);
@@ -71,9 +71,9 @@ var controller = {
         });
     },
 
-    getProjects: function (req, res) {
+    getProjects: function(req, res) {
         //Sacar todos los documentos
-        Project.find({/*Aqui van las condiciones*/ }).sort('year').exec((err, projects) => {
+        Project.find({ /*Aqui van las condiciones*/ }).sort('year').exec((err, projects) => {
             if (err) {
                 return res.status(500).send({ message: 'Error al devolver los datos' });
             }
@@ -84,7 +84,7 @@ var controller = {
         });
     },
 
-    updateProject: function (req, res) {
+    updateProject: function(req, res) {
         //Pasar url
         //Captura el id por la url
         var projectId = req.params.id;
@@ -106,7 +106,7 @@ var controller = {
             });
         });
     },
-    deleteProject: function (req, res) {
+    deleteProject: function(req, res) {
         var projectId = req.params.id;
 
         Project.findByIdAndRemove(projectId, (err, projectRemove) => {
@@ -121,40 +121,58 @@ var controller = {
         });
     },
 
-    upload: function (req, res) {
+    upload: async function(req, res) {
         var projectId = req.params.id;
         if (req.file) {
-
-            
-
             var file_path = req.file.path;
 
-            var file_split = file_path.split('\\');
+
+            // var file_split = file_path.split('\\'); for windows
+
+            var file_split = file_path.split('/');
 
             var file_name = file_split[1];
 
+
             var ext_split = req.file.originalname.split('\.');
+
+
 
             var file_ext = ext_split[1];
 
+
+
             file_ext = file_ext.toLowerCase();
 
-            if (file_ext == 'png' || file_ext == 'gif' || file_ext == 'jpg') {
+            if (file_ext === 'png' || file_ext === 'gif' || file_ext === 'jpg') {
 
-                Project.findByIdAndUpdate(projectId, { image: file_name }, (err, projectUpdated) => {
+                try {
+                    const projectUpdated = await Project.findByIdAndUpdate(projectId, { image: file_name });
+                    console.log(projectUpdated);
+                    return res.status(200).send({ Project: projectUpdated });
+                } catch (error) {
+                    return res.status(404).send({ message: error });
+                }
 
-                    if (!projectUpdated) {
 
-                        return res.status(404).send({ message: 'No se ha podido actualizar el album' });
 
-                    } else {
-                        console.log('Project Updated');
-                        console.log(projectUpdated);
-                        return res.status(200).send({ Project: projectUpdated });
+                // Project.findByIdAndUpdate(projectId, { image: file_name }, (err, projectUpdated) => {
 
-                    }
+                //     if (!projectUpdated) {
 
-                })
+                //         return res.status(404).send({ message: 'No se ha podido actualizar el album' });
+
+                //     } else {
+                //         console.log('Project Updated');
+                //         console.log(projectUpdated);
+                //         return res.status(200).send({ Project: projectUpdated });
+
+                //     }
+
+                // })
+
+
+
 
             } else {
 
@@ -170,10 +188,9 @@ var controller = {
         }
 
     },
-    getImageFile: function (req, res) {
+    getImageFile: function(req, res) {
         var file = req.params.image;
         var path_file = './uploads/' + file;
-
         fs.exists(path_file, (exists) => {
             if (exists) {
                 return res.sendFile(path.resolve(path_file));
@@ -183,9 +200,7 @@ var controller = {
                 });
             }
         });
-
     }
-
 };
 
 

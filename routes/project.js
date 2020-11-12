@@ -12,27 +12,15 @@ var multer = require('multer');
 const storage = multer.diskStorage({
 
     destination(req, file, cb) {
-
         cb(null, './uploads');
-
     },
-
     filename(req, file = {}, cb) {
-
         const { originalname } = file;
-
-
-
         const fileExtension = (originalname.match(/\.+[\S]+$/) || [])[0];
-
         // cb(null, `${file.fieldname}__${Date.now()}${fileExtension}`);
-
-        crypto.pseudoRandomBytes(16, function (err, raw) {
-
+        crypto.pseudoRandomBytes(16, function(err, raw) {
             cb(null, raw.toString('hex') + Date.now() + fileExtension);
-
         });
-
     },
 
 });
